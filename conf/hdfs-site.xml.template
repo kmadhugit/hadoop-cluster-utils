@@ -18,21 +18,21 @@
 
 <configuration>
 
-<property>
-<name>dfs.replication</name>
-<value>3</value>
-</property>
+	<property>
+		<name>dfs.replication</name>
+		<value>REPLICATION_VALUE</value>
+	</property>
 
-<property>
-<name>dfs.namenode.name.dir</name>
-<value>file:/data/madhu/hdfs-meta-data</value>
-<description>Meta data dir - can be RAM FS only on Namename</description>
-</property>
+	<property>
+		<name>dfs.namenode.name.dir</name>
+		<value>NAMENODE_DIR</value>
+		<description>Meta data dir - can be RAM FS only on Namename</description>
+	</property>
 
-<property>
-<name>dfs.datanode.data.dir</name>
-<value>file:/data/madhu/hdfs-data</value>
-<description>Data dir - on all data nodes</description>
-</property>
+	<property>
+		<name>dfs.datanode.data.dir</name>
+		<value>DATANODE_DIR</value>
+		<description>Data dir - on all data nodes</description>
+	</property>
 
 </configuration>
