@@ -1,0 +1,25 @@
+
+# Default hdfs configuration properties
+
+HADOOP_TMP_DIR=/home/testuser/app/tmp		
+REPLICATION_FACTOR=3
+DFS_NAMENODE_NAME_DIR=/home/testuser/data/hdfs-meta
+DFS_DATANODE_NAME_DIR=/home/testuser/data/hdfs-data		 
+
+# Site specific YARN configuration properties
+
+MASTER=10.88.67.158
+SLAVES=10.88.67.158,19,40g%10.88.67.113,20,50g%10.88.67.150,19,40g
+# Use this format to set SLAVE IPs : slave1IP,slave1cpu,slave1memory%slave2IP,slave2cpu,slave2memory%....%slaveNIP,slaveNcpu,slaveNmemory
+
+# Scheduler properties
+			 
+YARN_SCHEDULER_MIN_ALLOCATION_MB=128				 
+YARN_SCHEDULER_MAX_ALLOCATION_MB=4048
+YARN_SCHEDULER_MIN_ALLOCATION_VCORES=1
+YARN_SCHEDULER_MAX_ALLOCATION_VCORES=4
+
+# Node Manager properties (Default yarn cpu and memory value for all nodes)
+
+YARN_NODEMANAGER_RESOURCE_CPU_VCORES=4
+YARN_NODEMANAGER_RESOURCE_MEMORY_MB=4048
