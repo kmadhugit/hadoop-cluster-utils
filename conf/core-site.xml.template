@@ -17,13 +17,16 @@
 <!-- Put site-specific property overrides in this file. -->
 
 <configuration>
-  <property>
-    <name>fs.defaultFS</name>
-    <value>hdfs://namenode</value>
-    <description>Name node URL </description>
-  </property>
-    <property>
-    <name>hadoop.tmp.dir</name>
-    <value>file:/spark1/data/baidu/tmp</value>
-  </property>
+
+	<property>
+		<name>hadoop.tmp.dir</name>
+		<value>HADOOP.TMP.DIR</value>
+	</property>
+
+	<property>
+		<name>fs.defaultFS</name>
+		<value>hdfs://MASTER:9000</value>
+		<description>Name node URL </description>
+	</property>
+  
 </configuration>
