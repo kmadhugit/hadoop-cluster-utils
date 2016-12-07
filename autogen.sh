@@ -23,9 +23,9 @@ echo -en '# Use this format to set SLAVE IPs : slave1IP,slave1cpu,slave1memory%.
 echo -en '# Scheduler properties\n\n' >> config.sh
 			 
 echo -en 'YARN_SCHEDULER_MIN_ALLOCATION_MB=128\n' >> config.sh				 
-echo -en 'YARN_SCHEDULER_MAX_ALLOCATION_MB=4048\n' >> config.sh
+echo -en 'YARN_SCHEDULER_MAX_ALLOCATION_MB=204800\n' >> config.sh
 echo -en 'YARN_SCHEDULER_MIN_ALLOCATION_VCORES=1\n' >> config.sh
-echo -en 'YARN_SCHEDULER_MAX_ALLOCATION_VCORES=4\n\n' >> config.sh
+echo -en 'YARN_SCHEDULER_MAX_ALLOCATION_VCORES=40\n\n' >> config.sh
 
 echo -en '# Node Manager properties (Default yarn cpu and memory value for all nodes)\n\n' >> config.sh
 

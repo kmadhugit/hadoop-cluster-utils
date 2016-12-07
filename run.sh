@@ -10,10 +10,28 @@ if [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
     echo JAVA_HOME found, java executable in $JAVA_HOME    
 else
     echo "JAVA_HOME not found in your environment, please set the JAVA_HOME variable in your environment then continue to run this script."
+	exit 1 
 fi
 
 CURDIR=`pwd`            # Inside hadoop-cluster-utils directory where run.sh is exist
 WORKDIR=${HOME}         # where hadoop and spark package will download 
+
+
+# Validation for default hadoop port instances
+
+# List of default hadoop port instances
+declare -a port_list=(50070 50470 8080 50075 50475 50010 50020 50090 50030 50060 8020 50100 8021 51111 )
+
+for i in "${port_list[@]}";
+do
+   netstat -pnlt | grep $i
+   if [ $? -eq 0 ];
+   then
+       echo "Instance running on port $i. Kindly kill that instance then continue to run this script."
+	   exit 1
+   fi
+done
+
 
 # Validation for config file
 
@@ -32,7 +50,7 @@ then
 	    if [[ -z "$confvalue" ]];
 		then
             echo "Configuration vlaue not set properly for $line, please check config.sh file"
-		    exit
+		    exit 1
 	    fi
 	  fi
    done
@@ -79,11 +97,12 @@ then
          echo "This URL Not Exist. Please check your hadoop version then continue to run this script."
 		 exit 1
      fi 
-   
+
       # export path to the .bashrc file
-      grep "CURDIR" $HOME/.bashrc
+      grep -q "#StartHadoopEnv" $HOME/.bashrc
       if [ $? -ne 0 ];
 	  then
+	     echo "#StartHadoopEnv">> $HOME/.bashrc
 	     echo "export CURDIR="${CURDIR}"" >> $HOME/.bashrc
 	     echo "export PATH="${CURDIR}"/CURDIR:"${CURDIR}"/hadoop:$PATH" >> $HOME/.bashrc 
 	     echo "export HADOOP_HOME="${WORKDIR}"/hadoop-${hadoopver}" >> $HOME/.bashrc
@@ -95,6 +114,22 @@ then
 	     echo "export HADOOP_CONF_DIR=\$HADOOP_HOME/etc/hadoop" >> $HOME/.bashrc
 	     echo "export YARN_CONF_DIR=\$HADOOP_HOME/etc/hadoop" >> $HOME/.bashrc
 	     echo "export PATH="$HADOOP_HOME"/bin:$PATH" >> $HOME/.bashrc
+	     echo "#StopHadoopEnv">> $HOME/.bashrc
+	  else
+	     sed -i '/#StartHadoopEnv/,/#StopHadoopEnv/ d' $HOME/.bashrc
+	     echo "#StartHadoopEnv">> $HOME/.bashrc
+	     echo "export CURDIR="${CURDIR}"" >> $HOME/.bashrc
+	     echo "export PATH="${CURDIR}"/CURDIR:"${CURDIR}"/hadoop:$PATH" >> $HOME/.bashrc 
+	     echo "export HADOOP_HOME="${WORKDIR}"/hadoop-${hadoopver}" >> $HOME/.bashrc
+	     echo "export HADOOP_PREFIX=\$HADOOP_HOME" >> $HOME/.bashrc
+	     echo "export HADOOP_MAPRED_HOME=\$HADOOP_HOME" >> $HOME/.bashrc
+	     echo "export HADOOP_COMMON_HOME=\$HADOOP_HOME" >> $HOME/.bashrc
+	     echo "export HADOOP_HDFS_HOME=\$HADOOP_HOME" >> $HOME/.bashrc
+	     echo "export YARN_HOME=\$HADOOP_HOME" >> $HOME/.bashrc
+	     echo "export HADOOP_CONF_DIR=\$HADOOP_HOME/etc/hadoop" >> $HOME/.bashrc
+	     echo "export YARN_CONF_DIR=\$HADOOP_HOME/etc/hadoop" >> $HOME/.bashrc
+	     echo "export PATH="$HADOOP_HOME"/bin:$PATH" >> $HOME/.bashrc
+	     echo "#StopHadoopEnv">> $HOME/.bashrc   
       fi
 
   # Exporting PATH
@@ -127,20 +162,20 @@ then
          cp ${CURDIR}/conf/yarn-site.xml.template ${CURDIR}/conf/yarn-site.xml
 		 
 		 # Copy slaves file into HADOOP_HOME
-		 cp ${CURDIR}/conf/slaves $HADOOP_HOME/etc/hadoop
+		 mv -f ${CURDIR}/conf/slaves $HADOOP_HOME/etc/hadoop
 		 #CP ${CURDIR}/conf/slaves $HADOOP_HOME/etc/hadoop
   
          # core-site.xml configuration configuration properties
          sed -i 's|HADOOP.TMP.DIR|'"$HADOOP_TMP_DIR"'|g' ${CURDIR}/conf/core-site.xml
          sed -i 's|MASTER|'"$MASTER"'|g' ${CURDIR}/conf/core-site.xml
-         cp ${CURDIR}/conf/core-site.xml $HADOOP_HOME/etc/hadoop
+         mv -f ${CURDIR}/conf/core-site.xml $HADOOP_HOME/etc/hadoop
          #CP ${CURDIR}/conf/core-site.xml $HADOOP_HOME/etc/hadoop
   
          # hdfs-site.xml configuration properties
          sed -i 's|REPLICATION_VALUE|'"$REPLICATION_FACTOR"'|g' ${CURDIR}/conf/hdfs-site.xml
          sed -i 's|NAMENODE_DIR|'"$DFS_NAMENODE_NAME_DIR"'|g' ${CURDIR}/conf/hdfs-site.xml
          sed -i 's|DATANODE_DIR|'"$DFS_DATANODE_NAME_DIR"'|g' ${CURDIR}/conf/hdfs-site.xml
-         cp ${CURDIR}/conf/hdfs-site.xml $HADOOP_HOME/etc/hadoop
+         mv -f ${CURDIR}/conf/hdfs-site.xml $HADOOP_HOME/etc/hadoop
          #CP ${CURDIR}/conf/hdfs-site.xml $HADOOP_HOME/etc/hadoop
   
          # yarn-site.xml configuration properties
@@ -151,7 +186,7 @@ then
          sed -i 's|YARN_SCHEDULER_MAX_ALLOCATION_VCORES|'"$YARN_SCHEDULER_MAX_ALLOCATION_VCORES"'|g' ${CURDIR}/conf/yarn-site.xml
          sed -i 's|YARN_NODEMANAGER_RESOURCE_CPU_VCORES|'"$YARN_NODEMANAGER_RESOURCE_CPU_VCORES"'|g' ${CURDIR}/conf/yarn-site.xml
          sed -i 's|YARN_NODEMANAGER_RESOURCE_MEMORY_MB|'"$YARN_NODEMANAGER_RESOURCE_MEMORY_MB"'|g' ${CURDIR}/conf/yarn-site.xml
-         cp ${CURDIR}/conf/yarn-site.xml $HADOOP_HOME/etc/hadoop
+         mv -f ${CURDIR}/conf/yarn-site.xml $HADOOP_HOME/etc/hadoop
          #CP ${CURDIR}/conf/yarn-site.xml $HADOOP_HOME/etc/hadoop
   
          echo "Finished configuration properties in hadoop CURDIR and copied to $HADOOP_HOME/etc/hadoop"
@@ -214,10 +249,19 @@ fi
 echo "Export SPARK_HOME to the PATH"
 
 # Add scripts to the PATH
-grep "SPARK_HOME" ~/.bashrc
-if [ $? -ne 0 ]; then
+grep -q "SPARK_HOME" ~/.bashrc
+if [ $? -ne 0 ];
+then
+	echo "#StartSparkEnv">> $HOME/.bashrc
 	echo "export SPARK_HOME="${WORKDIR}"/spark-"${sparkver}"-bin-hadoop"${hadoopver:0:3}"" >> ~/.bashrc
 	echo "export PATH=\$SPARK_HOME/bin:$PATH" >> ~/.bashrc
+	echo "#StopSparkEnv">> $HOME/.bashrc
+else
+	sed -i '/#StartSparkEnv/,/#StopSparkEnv/ d' $HOME/.bashrc
+	echo "#StartSparkEnv">> $HOME/.bashrc
+	echo "export SPARK_HOME="${WORKDIR}"/spark-"${sparkver}"-bin-hadoop"${hadoopver:0:3}"" >> ~/.bashrc
+	echo "export PATH=\$SPARK_HOME/bin:$PATH" >> ~/.bashrc
+	echo "#StopSparkEnv">> $HOME/.bashrc
 fi
 
 export SPARK_HOME=${WORKDIR}/spark-${sparkver}-bin-hadoop${hadoopver:0:3}
