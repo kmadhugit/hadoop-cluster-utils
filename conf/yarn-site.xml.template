@@ -22,8 +22,32 @@
 	</property>
 
 	<property>
+		<name>yarn.resourcemanager.scheduler.address</name>
+		<value>0.0.0.0:RESOURCEMANAGER_SCHEDULER_ADDRESS</value>
+		<description>The address of the scheduler interface.</description>
+	</property>
+	
+	<property>
+		<name>yarn.resourcemanager.resource-tracker.address</name>
+		<value>0.0.0.0:RESOURCEMANAGER_RESOURCE_TRACKER_ADDRESS</value>
+	</property>
+	
+	<property>
+		<name>yarn.resourcemanager.address</name>
+		<value>0.0.0.0:RESOURCEMANAGER_ADDRESS</value>
+		<description>The address of the RM web application.</description>
+	</property>
+	
+	<property>
+		<name>yarn.resourcemanager.admin.address</name>
+		<value>0.0.0.0:RESOURCEMANAGER_ADMIN_ADDRESS</value>
+		<description>The address of the RM admin interface.</description>
+	</property>
+	
+	<property>
 		<name>yarn.resourcemanager.webapp.address</name>
-		<value>0.0.0.0:8088</value>
+		<value>0.0.0.0:RESOURCEMANAGER_WEBAPP_ADDRESS</value>
+		<description>The address of the applications manager interface in the RM.</description>
 	</property>
 
 <!-- Scheduler properties -->
@@ -72,6 +96,18 @@
 	<property>
 		<name>yarn.nodemanager.pmem-check-enabled</name>
 		<value>false</value>
+	</property>
+	
+	<property>
+		<name>yarn.nodemanager.localizer.address</name>
+		<value>	0.0.0.0:NODEMANAGER_LOCALIZER_ADDRESS</value>
+		<description>Address where the localizer IPC is.</description>
+	</property>
+
+	<property>
+		<name>yarn.nodemanager.webapp.address</name>
+		<value>0.0.0.0:NODEMANAGER_WEBAPP_ADDRESS</value>
+		<description>NM Webapp address.</description>
 	</property>
 
 </configuration>

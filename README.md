@@ -20,16 +20,22 @@
 
    1. To configure `hadoop-cluster-utils`, run `./autogen.sh` which will create `config.sh` with appropriate field values.
    2. User can enter `Spark` and `Hadoop` version interactively while running `./autogen.sh` file.
-   3. Before executing `./run.sh` file, user can verify or edit `config.sh`. 
+   3. Before executing `./setup.sh` file, user can verify or edit `config.sh`. 
 
 * Ensure that the following java process is running in master. If not, check the log files
   
+ ```bash
+  checkall.sh
+  ```
+  
+  Invoke `checkall.sh` ensure all services are started on the Master & slaves
+
   ```
   NameNode
   JobHistoryServer
   ResourceManager
   ```
-  Ensure that the following java process is running in slaves. If not, check the log files
+  Ensure that the following java process is running in slaves. If not, check the hadoop log files
   ```
   DataNode
   NodeManager
@@ -51,4 +57,5 @@
    > CP <localpath to file> <remotepath to dir> #Copy file from name nodes to all slaves
    > AN <command> #execute a given command in all nodes including master
    > DN <command> #execute a given command in all nodes excluding master
+   > checkall.sh #ensure all services are started on the Master & slaves
   ```
