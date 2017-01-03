@@ -16,7 +16,7 @@ then
    mkdir logs
 fi
 
-log=`pwd`/logs/log
+log=`pwd`/logs/hadoop_cluster_utils_$current_time.log
 
 if [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]];  then
     echo JAVA_HOME found, java executable in $JAVA_HOME    
@@ -64,11 +64,13 @@ then
       i=$i+1
     done
 
-    if [ -s $temp ];
+    if [ -f temp ];
     then
        cat temp
+       cat temp &>> $log
        echo "Kindly kill above running instance(s) else change port number in config.sh file, then continue to run this script."
-       rm temp >> $log
+       echo "Kindly kill above running instance(s) else change port number in config.sh file, then continue to run this script." &>> $log
+       rm temp &>> $log
        exit 1
     fi
    
@@ -110,8 +112,8 @@ then
   then
      if curl --output /dev/null --silent --head --fail "http://www-us.apache.org/dist/hadoop/common/hadoop-${hadoopver}/hadoop-${hadoopver}.tar.gz"
      then
-         wget http://www-us.apache.org/dist/hadoop/common/hadoop-${hadoopver}/hadoop-${hadoopver}.tar.gz >> $log
-         tar xf hadoop-${hadoopver}.tar.gz --gzip  >> $log
+         wget http://www-us.apache.org/dist/hadoop/common/hadoop-${hadoopver}/hadoop-${hadoopver}.tar.gz &>> $log
+         tar xf hadoop-${hadoopver}.tar.gz --gzip   &>> $log
      else
          echo "This URL Not Exist. Please check your hadoop version then continue to run this script."
          exit 1
@@ -124,7 +126,7 @@ then
          echo "#StartHadoopEnv">> $HOME/.bashrc
          echo "export CURDIR="${CURDIR}"" >> $HOME/.bashrc
          echo "export PATH="${CURDIR}"/CURDIR:"${CURDIR}"/hadoop:$PATH" >> $HOME/.bashrc 
-		 echo "export PATH="${CURDIR}"/CURDIR:"${CURDIR}"/utils:$PATH" >> $HOME/.bashrc
+         echo "export PATH="${CURDIR}"/CURDIR:"${CURDIR}"/utils:$PATH" >> $HOME/.bashrc
          echo "export HADOOP_HOME="${WORKDIR}"/hadoop-${hadoopver}" >> $HOME/.bashrc
          echo "export HADOOP_PREFIX=\$HADOOP_HOME" >> $HOME/.bashrc
          echo "export HADOOP_MAPRED_HOME=\$HADOOP_HOME" >> $HOME/.bashrc
@@ -140,7 +142,7 @@ then
          echo "#StartHadoopEnv">> $HOME/.bashrc
          echo "export CURDIR="${CURDIR}"" >> $HOME/.bashrc
          echo "export PATH="${CURDIR}"/CURDIR:"${CURDIR}"/hadoop:$PATH" >> $HOME/.bashrc 
-		 echo "export PATH="${CURDIR}"/CURDIR:"${CURDIR}"/utils:$PATH" >> $HOME/.bashrc 
+         echo "export PATH="${CURDIR}"/CURDIR:"${CURDIR}"/utils:$PATH" >> $HOME/.bashrc 
          echo "export HADOOP_HOME="${WORKDIR}"/hadoop-${hadoopver}" >> $HOME/.bashrc
          echo "export HADOOP_PREFIX=\$HADOOP_HOME" >> $HOME/.bashrc
          echo "export HADOOP_MAPRED_HOME=\$HADOOP_HOME" >> $HOME/.bashrc
@@ -157,7 +159,7 @@ then
   
       export CURDIR=${CURDIR}
       export PATH=${CURDIR}:${CURDIR}/hadoop:$PATH
-	  export PATH=${CURDIR}:${CURDIR}/utils:$PATH
+      export PATH=${CURDIR}:${CURDIR}/utils:$PATH
       export HADOOP_HOME=${WORKDIR}/hadoop-${hadoopver}
       export HADOOP_PREFIX=$HADOOP_HOME
       export HADOOP_MAPRED_HOME=$HADOOP_HOME
@@ -168,13 +170,6 @@ then
       export YARN_CONF_DIR=$HADOOP_HOME/etc/hadoop
       export PATH=$HADOOP_HOME/bin:$PATH
   
-
-      # copy .bashrc to all other data nodes
-      #CP $HOME/.bashrc $HOME
-      #CP ${WORKDIR}/hadoop-2.7.3.tar.gz ${WORKDIR}
-      #DN "tar xf hadoop-2.7.3.tar.gz --gzip"
-      #scp -r /path/to/file username@hostname:/path/to/destination
-
       echo "Started configuration properties in hadoop CURDIR"
 
       if [ ! -f ${CURDIR}/conf/core-site.xml ];
@@ -186,14 +181,12 @@ then
          
          # Copy slaves file into HADOOP_HOME
          mv -f ${CURDIR}/conf/slaves $HADOOP_HOME/etc/hadoop
-         #CP ${CURDIR}/conf/slaves $HADOOP_HOME/etc/hadoop
   
          # core-site.xml configuration configuration properties
          sed -i 's|HADOOP_TMP_DIR|'"$HADOOP_TMP_DIR"'|g' ${CURDIR}/conf/core-site.xml
          sed -i 's|MASTER|'"$MASTER"'|g' ${CURDIR}/conf/core-site.xml
          sed -i 's|NAMENODE_PORT|'"$NAMENODE_PORT"'|g' ${CURDIR}/conf/core-site.xml
          mv -f ${CURDIR}/conf/core-site.xml $HADOOP_HOME/etc/hadoop
-         #CP ${CURDIR}/conf/core-site.xml $HADOOP_HOME/etc/hadoop
   
          # hdfs-site.xml configuration properties
          sed -i 's|REPLICATION_VALUE|'"$REPLICATION_VALUE"'|g' ${CURDIR}/conf/hdfs-site.xml
@@ -206,14 +199,12 @@ then
          sed -i 's|DATANODE_HTTP_ADDRESS|'"$DATANODE_HTTP_ADDRESS"'|g' ${CURDIR}/conf/hdfs-site.xml
          sed -i 's|DATANODE_IPC_ADDRESS|'"$DATANODE_IPC_ADDRESS"'|g' ${CURDIR}/conf/hdfs-site.xml
          mv -f ${CURDIR}/conf/hdfs-site.xml $HADOOP_HOME/etc/hadoop
-         #CP ${CURDIR}/conf/hdfs-site.xml $HADOOP_HOME/etc/hadoop
   
          # mapred-site.xml configuration properties
          sed -i 's|MAPREDUCE_JOBHISTORY_ADDRESS|'"$MAPREDUCE_JOBHISTORY_ADDRESS"'|g' ${CURDIR}/conf/mapred-site.xml
          sed -i 's|MAPREDUCE_JOBHISTORY_ADMIN_ADDRESS|'"$MAPREDUCE_JOBHISTORY_ADMIN_ADDRESS"'|g' ${CURDIR}/conf/mapred-site.xml
          sed -i 's|MAPREDUCE_JOBHISTORY_WEBAPP_ADDRESS|'"$MAPREDUCE_JOBHISTORY_WEBAPP_ADDRESS"'|g' ${CURDIR}/conf/mapred-site.xml
          mv -f ${CURDIR}/conf/mapred-site.xml $HADOOP_HOME/etc/hadoop
-         #CP ${CURDIR}/conf/mapred-site.xml $HADOOP_HOME/etc/hadoop
   
          # yarn-site.xml configuration properties
          sed -i 's|MASTER|'"$MASTER"'|g' ${CURDIR}/conf/yarn-site.xml
@@ -231,7 +222,6 @@ then
          sed -i 's|NODEMANAGER_LOCALIZER_ADDRESS|'"$NODEMANAGER_LOCALIZER_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
          sed -i 's|NODEMANAGER_WEBAPP_ADDRESS|'"$NODEMANAGER_WEBAPP_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml		 
          mv -f ${CURDIR}/conf/yarn-site.xml $HADOOP_HOME/etc/hadoop
-         #CP ${CURDIR}/conf/yarn-site.xml $HADOOP_HOME/etc/hadoop
   
          echo "Finished configuration properties in hadoop CURDIR and copied to $HADOOP_HOME/etc/hadoop"
       fi  
@@ -254,13 +244,13 @@ then
          echo "Finished creating directories"
   
          echo "Formated NAMENODE"
-         $HADOOP_PREFIX/bin/hdfs namenode -format mycluster  >> $log
+         $HADOOP_PREFIX/bin/hdfs namenode -format mycluster  &>> $log
       fi
   fi    
 else
     echo "Config file does not exist. Please check README.md for installation steps." 
     exit 1
-fi  # Line 54 if condtion 
+fi   
 
 # Spark installation
 
@@ -270,8 +260,8 @@ if [ ! -d ${WORKDIR}/spark-${sparkver}-bin-hadoop${hadoopver:0:3} ];
 then
    if curl --output /dev/null --silent --head --fail "http://www-us.apache.org/dist/spark/spark-${sparkver}/spark-${sparkver}-bin-hadoop${hadoopver:0:3}.tgz"
    then
-     wget http://www-us.apache.org/dist/spark/spark-${sparkver}/spark-${sparkver}-bin-hadoop${hadoopver:0:3}.tgz >> $log
-     tar xf spark-${sparkver}-bin-hadoop${hadoopver:0:3}.tgz --gzip  >> $log
+     wget http://www-us.apache.org/dist/spark/spark-${sparkver}/spark-${sparkver}-bin-hadoop${hadoopver:0:3}.tgz &>> $log
+     tar xf spark-${sparkver}-bin-hadoop${hadoopver:0:3}.tgz --gzip  &>> $log
    else 
      echo "This URL Not Exist. Please check your spark version then continue to run this script."
      exit 1
@@ -302,7 +292,7 @@ export PATH=$SPARK_HOME/bin:$PATH
 echo -e "\nFinished export SPARK_HOME into .bashrc file"
 echo -e "Spark installation done..!!\n\n"
 
-$CURDIR/hadoop/start-all.sh >> $log
+$CURDIR/hadoop/start-all.sh &>> $log
 $CURDIR/utils/checkall.sh
 # use stop-all.sh for stopping
 
@@ -318,17 +308,16 @@ read -p "Do you wish to run above command ? [y/N] " prompt
 
 if [[ $prompt == "y" || $prompt == "Y" || $prompt == "yes" || $prompt == "Yes" ]]
 then
-  ${SPARK_HOME}/bin/spark-submit --class org.apache.spark.examples.SparkPi --master yarn-client --driver-memory 1024M --num-executors 2 --executor-memory 1g  --executor-cores 1 ${SPARK_HOME}/examples/jars/spark-examples_2.11-2.0.1.jar 10 >> $log
+  ${SPARK_HOME}/bin/spark-submit --class org.apache.spark.examples.SparkPi --master yarn-client --driver-memory 1024M --num-executors 2 --executor-memory 1g  --executor-cores 1 ${SPARK_HOME}/examples/jars/spark-examples_2.11-2.0.1.jar 10 &>> $log
 else
   echo "Thanks for your response"
 fi
 
-if [ -f ${log} ];
+grep -r 'Pi is roughly' ${log}
+
+if [ $? -eq 0 ];
 then
-   grep -r '3.14' ${log}
-   echo "Please check log file for more details."
+   echo "Spark services running. Please check log file for more details."
 else
    echo "Expected output not found. Please check log file for more details."
 fi
-
-mv ${log} $CURDIR/logs/hadoop_cluster_utils_$current_time.log
