@@ -1,6 +1,6 @@
 # Hadoop and Yarn Setup
 
-### Pre-requisities:
+### Pre-requisities for single node:
 1. JAVA Setup should be completed and JAVA_HOME should be set in the environment variable.
 2. Make sure the nodes are set for password-less SSH both ways(master->slaves).
 3. Since we use the environment variables a lot in our scripts, make sure to comment out the portion following this statement in your ~/.bashrc , 
@@ -11,7 +11,7 @@
 * To automate hadoop installation follows the steps,
 
   ```bash
-  git clone https://github.com/kmadhugit/hadoop-cluster-utils
+  git clone https://github.com/kmadhugit/hadoop-cluster-utils.git
   
   cd hadoop-cluster-utils  
   ```
@@ -22,6 +22,29 @@
    2. User can enter `Spark` and `Hadoop` version interactively while running `./autogen.sh` file.
    3. Before executing `./setup.sh` file, user can verify or edit `config.sh`. 
 
+### Pre-requisities for multi node:
+1. JAVA Setup should be completed and JAVA_HOME should be set in the environment variable.
+2. Make sure the nodes are set for password-less SSH both ways(master->slaves).
+3. Since we use the environment variables a lot in our scripts, make sure to comment out the portion following this statement in your ~/.bashrc , 
+`If not running interactively, don't do anything`
+4. Same username/useraccount should be need on `master` and `slaves` nodes.
+
+### Installations:
+
+* To automate hadoop installation follows the steps,
+
+  ```bash
+  git clone https://github.com/kmadhugit/hadoop-cluster-utils.git
+  
+  cd hadoop-cluster-utils  
+  ```
+  
+* Configuration
+
+   1. To configure `hadoop-cluster-utils`, run `./autogen_multinode.sh` which will create `config.sh` with appropriate field values.
+   2. User can enter SLAVEIPs (if more than one, use comma seperated). `Spark` and `Hadoop` version also can enter interactively while running `./autogen_multinode.sh` file.
+   3. Before executing `./setup_multinode.sh` file, user can verify or edit `config.sh`. 
+      
 * Ensure that the following java process is running in master. If not, check the log files
   
  ```bash
