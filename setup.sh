@@ -95,7 +95,7 @@ then
         memorypercent_master=$(awk "BEGIN { pc=80*${freememory_master}/100; i=int(pc); print (pc-i<0.5)?i:i+1 }")
         ncpu_master="$(nproc --all)"
         MASTER=''$HOSTNAME','$ncpu_master','$memorypercent_master''
-        SERVERS=`echo ''$MASTERS'%'$SLAVES''`
+        SERVERS=`echo ''$MASTER'%'$SLAVES''`
     fi
     MASTERIP=${HOSTNAME}
  
@@ -119,7 +119,7 @@ then
     echo "${ul}Downloading and installing hadoop...${nul}" | tee -a $log
 	echo -e | tee -a $log
     cd ${WORKDIR}
-    if [ ! -d ${WORKDIR}/hadoop-${hadoopver} ];
+    if [ ! -f ${WORKDIR}/hadoop-${hadoopver}.tar.gz ];
     then
         if curl --output /dev/null --silent --head --fail $HADOOP_URL
         then
@@ -272,7 +272,7 @@ echo "${ul}Downloading and installing Spark...${nul}" | tee -a $log
 
 cd ${WORKDIR}
 
-if [ ! -d ${WORKDIR}/spark-${sparkver}-bin-hadoop${hadoopver:0:3} ];
+if [ ! -f ${WORKDIR}/spark-${sparkver}-bin-hadoop${hadoopver:0:3}.tgz ];
 then
     if curl --output /dev/null --silent --head --fail $SPARK_URL
     then
@@ -326,27 +326,27 @@ cat ${CURDIR}/conf/slaves>>spark-${sparkver}-bin-hadoop${hadoopver:0:3}/conf/sla
 
 echo -e "Configuring Spark history server" | tee -a $log
 
-cp $SPARK_HOME/conf/spark_default.conf.template $SPARK_HOME/conf/spark_default.conf 
-grep -q "#StartSparkconf" $SPARK_HOME/conf/spark_default.conf 
+cp $SPARK_HOME/conf/spark-defaults.conf.template $SPARK_HOME/conf/spark-defaults.conf
+grep -q "#StartSparkconf" $SPARK_HOME/conf/spark-defaults.conf 
 if [ $? -ne 0 ];
 then
-    echo "#StartSparkconf" >> $SPARK_HOME/conf/spark_default.conf 
-    echo "spark.eventLog.enabled   true" >> $SPARK_HOME/conf/spark_default.conf
-    echo "spark.eventLog.dir       /tmp/spark-events" >> $SPARK_HOME/conf/spark_default.conf 
-    echo "spark.eventLog.compress  true" >> $SPARK_HOME/conf/spark_default.conf
-    echo "spark.history.fs.logDirectory   /tmp/spark-events-history" >> $SPARK_HOME/conf/spark_default.conf
-    echo "#StopSparkconf">> $SPARK_HOME/conf/spark_default.conf
+    echo "#StartSparkconf" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.eventLog.enabled   true" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.eventLog.dir       /tmp/spark-events" >> $SPARK_HOME/conf/spark-defaults.conf 
+    echo "spark.eventLog.compress  true" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.history.fs.logDirectory   /tmp/spark-events-history" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "#StopSparkconf">> $SPARK_HOME/conf/spark-defaults.conf
 else
-    sed -i '/#StartSparkconf/,/#StopSparkconf/ d' $SPARK_HOME/conf/spark_default.conf
-    echo "#StartSparkconf" >> $SPARK_HOME/conf/spark_default.conf 
-    echo "spark.eventLog.enabled   true" >> $SPARK_HOME/conf/spark_default.conf
-    echo "spark.eventLog.dir       /tmp/spark-events" >> $SPARK_HOME/conf/spark_default.conf 
-    echo "spark.eventLog.compress  true" >> $SPARK_HOME/conf/spark_default.conf
-    echo "spark.history.fs.logDirectory   /tmp/spark-events-history" >> $SPARK_HOME/conf/spark_default.conf
-    echo "#StopSparkconf">> $SPARK_HOME/conf/spark_default.conf 
+    sed -i '/#StartSparkconf/,/#StopSparkconf/ d' $SPARK_HOME/conf/spark-defaults.conf
+    echo "#StartSparkconf" >> $SPARK_HOME/conf/spark-defaults.conf 
+    echo "spark.eventLog.enabled   true" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.eventLog.dir       /tmp/spark-events" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.eventLog.compress  true" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.history.fs.logDirectory   /tmp/spark-events-history" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "#StopSparkconf">> $SPARK_HOME/conf/spark-defaults.conf
 fi
 
-CP $SPARK_HOME/conf/spark_default.conf $SPARK_HOME/conf &>/dev/null
+CP $SPARK_HOME/conf/spark-defaults.conf $SPARK_HOME/conf &>/dev/null
 
 echo -e "Spark installation done..!!\n" | tee -a $log
 
@@ -361,12 +361,14 @@ then
      AN "mkdir -p $HADOOP_TMP_DIR" &>/dev/null
      AN "mkdir -p $DFS_NAMENODE_NAME_DIR" &>/dev/null
      AN "mkdir -p $DFS_DATANODE_NAME_DIR" &>/dev/null
+     AN "mkdir -p /tmp/spark-events" &>/dev/null
+     AN "mkdir -p /tmp/spark-events-history" &>/dev/null
      echo "Finished creating directories"
 fi        
 
 echo 'Formatting NAMENODE'| tee -a $log
 
-$HADOOP_PREFIX/bin/hdfs namenode -format mycluster | tee -a $log
+$HADOOP_PREFIX/bin/hdfs namenode -format mycluster >> $log
 echo -e | tee -a $log
 $CURDIR/hadoop/start-all.sh | tee -a $log
 echo -e | tee -a $log
@@ -390,7 +392,7 @@ read -p "Do you wish to run above command ? [y/N] " prompt
 
 if [[ $prompt == "y" || $prompt == "Y" || $prompt == "yes" || $prompt == "Yes" ]]
 then
-  ${SPARK_HOME}/bin/spark-submit --class org.apache.spark.examples.SparkPi --master yarn-client --driver-memory 1024M --num-executors 2 --executor-memory 1g  --executor-cores 1 ${SPARK_HOME}/examples/jars/spark-examples_2.11-2.0.1.jar 10 | tee -a $log
+  ${SPARK_HOME}/bin/spark-submit --class org.apache.spark.examples.SparkPi --master yarn-client --driver-memory 1024M --num-executors 2 --executor-memory 1g  --executor-cores 1 ${SPARK_HOME}/examples/jars/spark-examples_2.11-2.0.1.jar 10 &>> $log
   
 else
   echo "Thanks for your response"
