@@ -28,6 +28,18 @@ else
     exit 1 
 fi
 
+grep '#case $- in' $HOME/.bashrc &>>/dev/null
+ if [ $? -ne 0 ]
+then
+    echo 'Prerequisite not completed. Please comment below lines in .bashrc file' | tee -a $log
+    echo "# If not running interactively, don't do anything" | tee -a $log
+    echo "case \$- in" | tee -a $log
+    echo "*i*) ;;" | tee -a $log
+    echo "*) return;;" | tee -a $log
+    echo "esac" | tee -a $log
+	exit 1
+fi
+
 ## Validation for config file
 
 if [ -f ${CURDIR}/config.sh ]; 
@@ -72,7 +84,7 @@ then
         cat temp
         cat temp >> $log
         echo "Kindly kill above running instance(s) else change port number in config.sh file, then continue to run this script." | tee -a $log
-        rm temp &>/dev/null
+        rm temp &>/dev/null 
         exit 1
     fi
    
@@ -82,23 +94,22 @@ then
 
     
     SLAVES=`cat ${CURDIR}/config.sh | grep SLAVES | grep -v "^#" |cut -d "=" -f2`
-  
-    cat ${CURDIR}/config.sh | grep SLAVES | grep -v "^#" | tr "%" "\n" | grep $HOSTNAME
+    
+    cat ${CURDIR}/config.sh | grep SLAVES | grep -v "^#" | tr "%" "\n" | grep -E ''$MASTER'|'$HOSTNAME'' &>>/dev/null
     if [ $? -eq 0 ]
     then
 	    #if master is also used as data machine 
-        SERVERS='$SLAVES' 
+        SERVERS=$SLAVES
     else
 	    ## Getting details for Master machine
  
         freememory_master="$(free -m | awk '{print $4}'| head -2 | tail -1)"
         memorypercent_master=$(awk "BEGIN { pc=80*${freememory_master}/100; i=int(pc); print (pc-i<0.5)?i:i+1 }")
         ncpu_master="$(nproc --all)"
-        MASTER=''$HOSTNAME','$ncpu_master','$memorypercent_master''
-        SERVERS=`echo ''$MASTER'%'$SLAVES''`
+        MASTER_DETAILS=''$HOSTNAME','$ncpu_master','$memorypercent_master''
+        SERVERS=`echo ''$MASTER_DETAILS'%'$SLAVES''`
     fi
-    MASTERIP=${HOSTNAME}
- 
+     
     ## Validation for Slaves IPs
     echo -e "${ul}Validation for slave IPs${nul}" | tee -a $log
     while IFS= read -r ip; do
@@ -123,7 +134,7 @@ then
     then
         if curl --output /dev/null --silent --head --fail $HADOOP_URL
         then
-            echo "Hadoop file Downloading on Master" | tee -a $log
+            echo 'Hadoop file Downloading on Master- '$MASTER'' | tee -a $log
 	        wget $HADOOP_URL | tee -a $log
         else
             echo "This URL Not Exist. Please check your hadoop version then continue to run this script." | tee -a $log
@@ -136,9 +147,14 @@ then
 		  	  
 	for i in `echo $SERVERS |cut -d "=" -f2 | tr "%" "\n" | cut -d "," -f1`
 	do 
-	  echo 'Copying Hadoop file to machine '$i' and unzipping ' | tee -a $log
-	  scp ${WORKDIR}/hadoop-${hadoopver}.tar.gz @$i:${WORKDIR} | tee -a $log
-	  ssh $i "tar xf hadoop-${hadoopver}.tar.gz --gzip" 
+	  
+	    if [ $i != $MASTER ]
+	    then
+	      echo 'Copying Hadoop setup file on '$i'' | tee -a $log
+	      scp ${WORKDIR}/hadoop-${hadoopver}.tar.gz @$i:${WORKDIR} | tee -a $log
+	    fi
+        echo 'Unzipping Hadoop setup file on '$i'' | tee -a $log	  
+	    ssh $i "tar xf hadoop-${hadoopver}.tar.gz --gzip" 
 	 
          echo 'Updating hadoop variables on '$i'' | tee -a $log
 		 
@@ -191,7 +207,7 @@ then
        
         #core-site.xml configuration configuration properties
         sed -i 's|HADOOP_TMP_DIR|'"$HADOOP_TMP_DIR"'|g' ${CURDIR}/conf/core-site.xml
-        sed -i 's|MASTER|'"$MASTERIP"'|g' ${CURDIR}/conf/core-site.xml
+        sed -i 's|MASTER|'"$MASTER"'|g' ${CURDIR}/conf/core-site.xml
         sed -i 's|NAMENODE_PORT|'"$NAMENODE_PORT"'|g' ${CURDIR}/conf/core-site.xml
 		 
            
@@ -276,8 +292,8 @@ if [ ! -f ${WORKDIR}/spark-${sparkver}-bin-hadoop${hadoopver:0:3}.tgz ];
 then
     if curl --output /dev/null --silent --head --fail $SPARK_URL
     then
+	    echo 'SPARK file Downloading on Master - '$MASTER'' | tee -a $log
         wget $SPARK_URL | tee -a $log
-        echo "Spark copy downloaded on Master " | tee -a $log
     else 
         echo "This URL Not Exist. Please check your spark version then continue to run this script." | tee -a $log
         exit 1
@@ -289,10 +305,15 @@ fi
 
 for i in `echo $SERVERS |cut -d "=" -f2 | tr "%" "\n" | cut -d "," -f1`
 do
-    echo 'Updating .bashrc file on '$i' with Spark variables '
-    scp ${WORKDIR}/spark-${sparkver}-bin-hadoop${hadoopver:0:3}.tgz @$i:${WORKDIR} | tee -a $log
+    if [ $i != $MASTER ]
+	then
+	    echo 'Copying Spark setup file on '$i'' | tee -a $log
+	    scp ${WORKDIR}/spark-${sparkver}-bin-hadoop${hadoopver:0:3}.tgz @$i:${WORKDIR} | tee -a $log
+	fi
+	echo 'Unzipping Spark setup file on '$i'' | tee -a $log
     ssh $i "tar xf spark*.tgz --gzip" | tee -a $log	
-		
+	
+	echo 'Updating .bashrc file on '$i' with Spark variables '	
 	echo '#StartSparkEnv' >tmp_b
 	echo "export SPARK_HOME="${WORKDIR}"/spark-"${sparkver}"-bin-hadoop"${hadoopver:0:3}"" >>tmp_b
 	echo "export PATH=\$SPARK_HOME/bin:\$PATH">>tmp_b
@@ -351,7 +372,7 @@ CP $SPARK_HOME/conf/spark-defaults.conf $SPARK_HOME/conf &>/dev/null
 echo -e "Spark installation done..!!\n" | tee -a $log
 
 
-source ${WORKDIR}/.bashrc
+source ${HOME}/.bashrc
 
 ##to start hadoop setup
 
@@ -378,9 +399,9 @@ $CURDIR/utils/checkall.sh | tee -a $log
 
 echo -e | tee -a $log
 echo "${ul}Web URL link${nul}" | tee -a $log
-echo "HDFS web address : http://"$MASTERIP":"$NAMENODE_HTTP_ADDRESS"" | tee -a $log
-echo "Resource Manager : http://"$MASTERIP":"$RESOURCEMANAGER_WEBAPP_ADDRESS"/cluster" | tee -a $log
-echo "SPARK history server : http://"$MASTERIP":"$SPARKHISTORY_HTTP_ADDRESS"" | tee -a $log
+echo "HDFS web address : http://"$MASTER":"$NAMENODE_HTTP_ADDRESS"" | tee -a $log
+echo "Resource Manager : http://"$MASTER":"$RESOURCEMANAGER_WEBAPP_ADDRESS"/cluster" | tee -a $log
+echo "SPARK history server : http://"$MASTER":"$SPARKHISTORY_HTTP_ADDRESS"" | tee -a $log
 echo -e | tee -a $log
 
 echo "---------------------------------------------" | tee -a $log	

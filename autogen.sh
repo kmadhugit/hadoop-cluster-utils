@@ -9,13 +9,15 @@ echo -en 'NAMENODE_DIR=/tmp/'"${USER}"'/hdfs-meta\n' >> config.sh
 echo -en 'DATANODE_DIR=/tmp/'"${USER}"'/hdfs-data\n\n' >> config.sh
 
 echo -en '# Master Details\n' >> config.sh
-echo -en 'MASTER='$HOSTNAME'\n\n' >> config.sh
+MASTER=`host $HOSTNAME | cut -f4 -d " "`
+echo -en 'MASTER='$MASTER'\n\n' >> config.sh
 
 echo -en 'Please enter slave IP detail in format slave1IP,slave2IP \n'
 read SLAVEIP
 
 echo -en '# Using these format to save SLAVE Details: slave1IP,slave1cpu,slave1memory....\n' >> config.sh
 echo -e
+
 j=0
 for i in `echo $SLAVEIP |tr ',' ' '`
 do
