@@ -9,7 +9,7 @@ echo -en 'NAMENODE_DIR=/tmp/'"${USER}"'/hdfs-meta\n' >> config.sh
 echo -en 'DATANODE_DIR=/tmp/'"${USER}"'/hdfs-data\n\n' >> config.sh
 
 echo -en '# Master Details\n' >> config.sh
-MASTER=`host $HOSTNAME | cut -f4 -d " "`
+MASTER=`ifconfig | grep "inet" |head -1 | awk {'print $2'} | cut -f2 -d ":"`
 echo -en 'MASTER='$MASTER'\n\n' >> config.sh
 
 echo -en 'Please enter slave IP detail in format slave1IP,slave2IP \n'
@@ -21,15 +21,16 @@ echo -e
 j=0
 for i in `echo $SLAVEIP |tr ',' ' '`
 do
-echo -en 'Collecting memory details from SLAVE machine '$i' \n'
-freememory=$(ssh $i free -m | awk '{print $4}'| head -2 | tail -1)
+slaveip=$(ssh $i /sbin/ifconfig | grep "inet" |head -1 | awk {'print $2'} | cut -f2 -d ":")
+echo -en 'Collecting memory details from SLAVE machine '$slaveip' \n'
+freememory=$(ssh $slaveip free -m | awk '{print $4}'| head -2 | tail -1)
 memorypercent=$(awk "BEGIN { pc=80*$freememory/100; i=int(pc); print (pc-i<0.5)?i:i+1 }")
-ncpu=$(ssh $i nproc --all)
+ncpu=$(ssh $slaveip nproc --all)
 if [ $j -eq 0 ]
 then
-SLAVE=`echo ''$i','$ncpu','$memorypercent''`
+SLAVE=`echo ''$slaveip','$ncpu','$memorypercent''`
 else
-SLAVE=`echo ''$SLAVE'%'$i','$ncpu','$memorypercent''`
+SLAVE=`echo ''$SLAVE'%'$slaveip','$ncpu','$memorypercent''`
 fi
 ((j=j+1))
 done

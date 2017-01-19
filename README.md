@@ -13,6 +13,7 @@ For local host
 ```
 ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa 
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+chmod 0600 ~/.ssh/authorized_keys
  ```
 For other hosts
 
@@ -35,8 +36,7 @@ ssh user@host
          *) return;;
    esac
   ```
-4. Install curl `sudo apt-get install curl` and install wget `sudo apt-get install wget`.
-5. Same username/useraccount should be need on `master` and `slaves` nodes for multinode installation.
+4. Same username/useraccount should be need on `master` and `slaves` nodes for multinode installation.
 
 ### Installations:
 
@@ -55,7 +55,7 @@ ssh user@host
    3. Default `Spark-2.0.1` and `Hadoop-2.7.1` version available for installation. 
    4. User can edit default port values, `spark` and `hadoop` versions in config.sh
    5. Before executing `./setup.sh` file, user can verify or edit `config.sh` 
-   6. Once setup script completed,source `~/.bashrc` file. 
+   6. Once setup script completed,source `~/.bashrc` file to export updated hadoop and spark environment variables for current login session. 
    
 * Ensure that the following java process is running in master. If not, check the log files
   

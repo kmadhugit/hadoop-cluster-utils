@@ -19,7 +19,7 @@ fi
 
 log=`pwd`/logs/hadoop_cluster_utils_$current_time.log
 echo -e | tee -a $log
-if [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]]
+if [[ -n "$JAVA_HOME" ]]
 then
     echo JAVA_HOME found on MASTER, java executable in $JAVA_HOME | tee $log
     echo "---------------------------------------------" | tee -a $log
@@ -31,13 +31,33 @@ fi
 grep '#case $- in' $HOME/.bashrc &>>/dev/null
  if [ $? -ne 0 ]
 then
-    echo 'Prerequisite not completed. Please comment below lines in .bashrc file' | tee -a $log
-    echo "# If not running interactively, don't do anything" | tee -a $log
-    echo "case \$- in" | tee -a $log
-    echo "*i*) ;;" | tee -a $log
-    echo "*) return;;" | tee -a $log
-    echo "esac" | tee -a $log
-	exit 1
+    grep 'case $- in' $HOME/.bashrc &>>/dev/null
+	if [ $? -eq 0 ]
+	then 
+        echo 'Prerequisite not completed on Master. Please comment below lines in .bashrc file , also make sure same on slave machines' | tee -a $log
+        echo "# If not running interactively, don't do anything" | tee -a $log
+        echo "case \$- in" | tee -a $log
+        echo "*i*) ;;" | tee -a $log
+        echo "*) return;;" | tee -a $log
+        echo "esac" | tee -a $log
+	    exit 1
+	fi	
+fi
+
+##Checking if wget and curl installed or not, and getting installed if not
+
+if [ ! -x /usr/bin/wget ] ; then
+   echo "wget is not installed on Master, so getting installed" | tee -a $log
+   sudo apt-get install wget | tee -a $log
+else
+   echo "wget is already installed on Master" | tee -a $log
+fi
+
+if [ ! -x /usr/bin/curl ] ; then
+   echo "curl is not installed on Master, so getting installed" | tee -a $log
+   sudo apt-get install curl | tee -a $log
+else
+   echo "curl is already installed on Master" | tee -a $log
 fi
 
 ## Validation for config file
@@ -95,7 +115,7 @@ then
     
     SLAVES=`cat ${CURDIR}/config.sh | grep SLAVES | grep -v "^#" |cut -d "=" -f2`
     
-    cat ${CURDIR}/config.sh | grep SLAVES | grep -v "^#" | tr "%" "\n" | grep -E ''$MASTER'|'$HOSTNAME'' &>>/dev/null
+    cat ${CURDIR}/config.sh | grep SLAVES | grep -v "^#" | tr "%" "\n" | grep "$MASTER" &>>/dev/null
     if [ $? -eq 0 ]
     then
 	    #if master is also used as data machine 
@@ -106,7 +126,7 @@ then
         freememory_master="$(free -m | awk '{print $4}'| head -2 | tail -1)"
         memorypercent_master=$(awk "BEGIN { pc=80*${freememory_master}/100; i=int(pc); print (pc-i<0.5)?i:i+1 }")
         ncpu_master="$(nproc --all)"
-        MASTER_DETAILS=''$HOSTNAME','$ncpu_master','$memorypercent_master''
+        MASTER_DETAILS=''$MASTER','$ncpu_master','$memorypercent_master''
         SERVERS=`echo ''$MASTER_DETAILS'%'$SLAVES''`
     fi
      
@@ -269,8 +289,8 @@ then
 	  JAVA_HOME_SLAVE=$(ssh $slaveip 'grep JAVA_HOME ~/.bashrc | grep -v "PATH" | cut -d"=" -f2')
 	  echo "sed -i 's|"\${JAVA_HOME}"|"${JAVA_HOME_SLAVE}"|g' $HADOOP_HOME/etc/hadoop/hadoop-env.sh" | ssh $slaveip bash
       echo "---------------------------------------------" | tee -a $log
-		 
-	done	 
+	  
+    done	 
 	rm -rf ${CURDIR}/conf/*site.xml
  	
     ##Updating the slave file on master 
@@ -339,6 +359,7 @@ rm -rf tmp_b
 echo "---------------------------------------------" | tee -a $log	
 
 ## updating Slave file for Spark folder
+source ${HOME}/.bashrc
 echo 'Updating Slave file for Spark setup'| tee -a $log
 
 cp spark-${sparkver}-bin-hadoop${hadoopver:0:3}/conf/slaves.template spark-${sparkver}-bin-hadoop${hadoopver:0:3}/conf/slaves
@@ -371,17 +392,22 @@ CP $SPARK_HOME/conf/spark-defaults.conf $SPARK_HOME/conf &>/dev/null
 
 echo -e "Spark installation done..!!\n" | tee -a $log
 
-
-source ${HOME}/.bashrc
-
 ##to start hadoop setup
 
 if [ ! -d "$HADOOP_TMP_DIR" ]
 then
     # Creating directories
      AN "mkdir -p $HADOOP_TMP_DIR" &>/dev/null
-     AN "mkdir -p $DFS_NAMENODE_NAME_DIR" &>/dev/null
-     AN "mkdir -p $DFS_DATANODE_NAME_DIR" &>/dev/null
+     AN "mkdir -p $NAMENODE_DIR" &>/dev/null
+     AN "mkdir -p $DATANODE_DIR" &>/dev/null
+     AN "mkdir -p /tmp/spark-events" &>/dev/null
+     AN "mkdir -p /tmp/spark-events-history" &>/dev/null
+     echo "Finished creating directories"
+else 
+     AN "rm -rf /tmp/$USER/*" &>/dev/null
+	 AN "mkdir -p $HADOOP_TMP_DIR" &>/dev/null
+     AN "mkdir -p $NAMENODE_DIR" &>/dev/null
+     AN "mkdir -p $DATANODE_DIR" &>/dev/null
      AN "mkdir -p /tmp/spark-events" &>/dev/null
      AN "mkdir -p /tmp/spark-events-history" &>/dev/null
      echo "Finished creating directories"
@@ -408,6 +434,7 @@ echo "---------------------------------------------" | tee -a $log
 echo "${ul}Ensure SPARK running correctly using following command${nul}" | tee -a $log
 echo "${SPARK_HOME}/bin/spark-submit --class org.apache.spark.examples.SparkPi --master yarn-client --driver-memory 1024M --num-executors 2 --executor-memory 1g  --executor-cores 1 ${SPARK_HOME}/examples/jars/spark-examples_2.11-2.0.1.jar 10" | tee -a $log
 echo -e 
+source ${HOME}/.bashrc
 read -p "Do you wish to run above command ? [y/N] " prompt
 
 
@@ -426,9 +453,8 @@ if [ $? -eq 0 ];
 then
    echo 'Spark services running.' | tee -a $log
    echo 'Please check log file '$log' for more details.'
-   
 else
    echo 'Expected output not found.' | tee -a $log
    echo 'Please check log file '$log' for more details'
 fi
-
+echo -e
