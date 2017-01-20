@@ -267,17 +267,17 @@ then
 	  cp ${CURDIR}/conf/yarn-site.xml.template ${CURDIR}/conf/yarn-site.xml
 	  
 	  sed -i 's|MASTER|'"$MASTER"'|g' ${CURDIR}/conf/yarn-site.xml
-      sed -i 's|YARN_SCHEDULER_MIN_ALLOCATION_MB|'"$YARN_SCHEDULER_MIN_ALLOCATION_MB"'|g' ${CURDIR}/conf/yarn-site.xml
+	  sed -i 's|YARN_SCHEDULER_MIN_ALLOCATION_MB|'"$YARN_SCHEDULER_MIN_ALLOCATION_MB"'|g' ${CURDIR}/conf/yarn-site.xml
 	  sed -i 's|YARN_SCHEDULER_MAX_ALLOCATION_MB|'"$memorypercent"'|g' ${CURDIR}/conf/yarn-site.xml
 	  sed -i 's|YARN_SCHEDULER_MIN_ALLOCATION_VCORES|'"$YARN_SCHEDULER_MIN_ALLOCATION_VCORES"'|g' ${CURDIR}/conf/yarn-site.xml
 	  sed -i 's|YARN_SCHEDULER_MAX_ALLOCATION_VCORES|'"$ncpu"'|g' ${CURDIR}/conf/yarn-site.xml
 	  sed -i 's|YARN_NODEMANAGER_RESOURCE_CPU_VCORES|'"$ncpu"'|g' ${CURDIR}/conf/yarn-site.xml
       sed -i 's|YARN_NODEMANAGER_RESOURCE_MEMORY_MB|'"$memorypercent"'|g' ${CURDIR}/conf/yarn-site.xml
-	  sed -i 's|RESOURCEMANAGER_SCHEDULER_ADDRESS|'"$RESOURCEMANAGER_SCHEDULER_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
-      sed -i 's|RESOURCEMANAGER_RESOURCE_TRACKER_ADDRESS|'"$RESOURCEMANAGER_RESOURCE_TRACKER_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
-      sed -i 's|RESOURCEMANAGER_ADDRESS|'"$RESOURCEMANAGER_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
-      sed -i 's|RESOURCEMANAGER_ADMIN_ADDRESS|'"$RESOURCEMANAGER_ADMIN_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
-      sed -i 's|RESOURCEMANAGER_WEBAPP_ADDRESS|'"$RESOURCEMANAGER_WEBAPP_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
+	  sed -i 's|0.0.0.0:RESOURCEMANAGER_SCHEDULER_ADDRESS|'"$MASTER"':'"$RESOURCEMANAGER_SCHEDULER_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
+      sed -i 's|0.0.0.0:RESOURCEMANAGER_RESOURCE_TRACKER_ADDRESS|'"$MASTER"':'"$RESOURCEMANAGER_RESOURCE_TRACKER_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
+      sed -i 's|0.0.0.0:RESOURCEMANAGER_ADDRESS|'"$MASTER"':'"$RESOURCEMANAGER_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
+      sed -i 's|0.0.0.0:RESOURCEMANAGER_ADMIN_ADDRESS|'"$MASTER"':'"$RESOURCEMANAGER_ADMIN_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
+      sed -i 's|0.0.0.0:RESOURCEMANAGER_WEBAPP_ADDRESS|'"$MASTER"':'"$RESOURCEMANAGER_WEBAPP_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
       sed -i 's|NODEMANAGER_LOCALIZER_ADDRESS|'"$NODEMANAGER_LOCALIZER_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
       sed -i 's|NODEMANAGER_WEBAPP_ADDRESS|'"$NODEMANAGER_WEBAPP_ADDRESS"'|g' ${CURDIR}/conf/yarn-site.xml
 		 
@@ -374,17 +374,17 @@ if [ $? -ne 0 ];
 then
     echo "#StartSparkconf" >> $SPARK_HOME/conf/spark-defaults.conf
     echo "spark.eventLog.enabled   true" >> $SPARK_HOME/conf/spark-defaults.conf
-    echo "spark.eventLog.dir       /tmp/spark-events" >> $SPARK_HOME/conf/spark-defaults.conf 
+    echo "spark.eventLog.dir       /tmp/${USER}/spark-events" >> $SPARK_HOME/conf/spark-defaults.conf 
     echo "spark.eventLog.compress  true" >> $SPARK_HOME/conf/spark-defaults.conf
-    echo "spark.history.fs.logDirectory   /tmp/spark-events-history" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.history.fs.logDirectory   /tmp/${USER}/spark-events-history" >> $SPARK_HOME/conf/spark-defaults.conf
     echo "#StopSparkconf">> $SPARK_HOME/conf/spark-defaults.conf
 else
     sed -i '/#StartSparkconf/,/#StopSparkconf/ d' $SPARK_HOME/conf/spark-defaults.conf
     echo "#StartSparkconf" >> $SPARK_HOME/conf/spark-defaults.conf 
     echo "spark.eventLog.enabled   true" >> $SPARK_HOME/conf/spark-defaults.conf
-    echo "spark.eventLog.dir       /tmp/spark-events" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.eventLog.dir       /tmp/${USER}/spark-events" >> $SPARK_HOME/conf/spark-defaults.conf
     echo "spark.eventLog.compress  true" >> $SPARK_HOME/conf/spark-defaults.conf
-    echo "spark.history.fs.logDirectory   /tmp/spark-events-history" >> $SPARK_HOME/conf/spark-defaults.conf
+    echo "spark.history.fs.logDirectory   /tmp/${USER}/spark-events-history" >> $SPARK_HOME/conf/spark-defaults.conf
     echo "#StopSparkconf">> $SPARK_HOME/conf/spark-defaults.conf
 fi
 
@@ -400,16 +400,18 @@ then
      AN "mkdir -p $HADOOP_TMP_DIR" &>/dev/null
      AN "mkdir -p $NAMENODE_DIR" &>/dev/null
      AN "mkdir -p $DATANODE_DIR" &>/dev/null
-     AN "mkdir -p /tmp/spark-events" &>/dev/null
-     AN "mkdir -p /tmp/spark-events-history" &>/dev/null
+     AN "mkdir -p /tmp/${USER}/spark-events" &>/dev/null
+     AN "mkdir -p /tmp/${USER}/spark-events-history" &>/dev/null
      echo "Finished creating directories"
 else 
-     AN "rm -rf /tmp/$USER/*" &>/dev/null
+     AN "rm -rf /tmp/${USER}/*" &>/dev/null
+	 AN "rm -rf /tmp/${USER}/spark-events" &>/dev/null
+	 AN "rm -rf /tmp/${USER}/spark-events-history" &>/dev/null
 	 AN "mkdir -p $HADOOP_TMP_DIR" &>/dev/null
      AN "mkdir -p $NAMENODE_DIR" &>/dev/null
      AN "mkdir -p $DATANODE_DIR" &>/dev/null
-     AN "mkdir -p /tmp/spark-events" &>/dev/null
-     AN "mkdir -p /tmp/spark-events-history" &>/dev/null
+     AN "mkdir -p /tmp/${USER}/spark-events" &>/dev/null
+     AN "mkdir -p /tmp/${USER}/spark-events-history" &>/dev/null
      echo "Finished creating directories"
 fi        
 
