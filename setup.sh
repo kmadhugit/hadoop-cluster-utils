@@ -22,7 +22,7 @@ echo -e | tee -a $log
 
 
 ##Checking if wget and curl installed or not, and getting installed if not for ubuntu and redhat both
-python -mplatform  |grep -i redhat >/dev/null 2>&1
+python -mplatform  |grep -i -E 'redhat|centos' >/dev/null 2>&1
 # Ubuntu
 if [ $? -ne 0 ]
 then
@@ -167,6 +167,7 @@ then
         cat temp
         cat temp >> $log
         echo "Kindly kill above running instance(s) else change port number in config file, then continue to run this script." | tee -a $log
+        echo "By Using: kill `sudo lsof -t -i:#PORT_NUM`"
         rm temp &>/dev/null 
         exit 1
     fi
@@ -221,7 +222,9 @@ then
 		if [ $? -eq 0 ]
 		then 
 		 echo 'Deleting existing hadoop folder "'hadoop-${hadoopver}'" from '$i' '| tee -a $log
+		 echo 'Deleting existing hadoop folder "'hadoop-${hadoopver}.tar.gz'" from '$i' '| tee -a $log
 		 ssh $i "rm -rf ${WORKDIR}/hadoop-${hadoopver}" &>>/dev/null
+		 ssh $i "rm -rf ${WORKDIR}/hadoop-${hadoopver}.tar.gz" &>>/dev/null
 		fi
 		
          echo 'Unzipping Hadoop setup file on '$i'' | tee -a $log	  
@@ -538,7 +541,7 @@ echo "---------------------------------------------" | tee -a $log
 	then 
 		echo "Setting up mysql" | tee -a $log
 
-		python -mplatform  |grep -i redhat >/dev/null 2>&1
+		python -mplatform  |grep -i -E 'redhat|centos' >/dev/null 2>&1
 		# Ubuntu
 		if [ $? -ne 0 ]
 		then
