@@ -167,7 +167,7 @@ then
         cat temp
         cat temp >> $log
         echo "Kindly kill above running instance(s) else change port number in config file, then continue to run this script." | tee -a $log
-        echo "By Using: kill `sudo lsof -t -i:#PORT_NUM`"
+        echo "By Using: kill \`sudo lsof -t -i:#PORT_NUM\`"
         rm temp &>/dev/null 
         exit 1
     fi
