@@ -100,7 +100,7 @@
 	
 	<property>
 		<name>yarn.nodemanager.localizer.address</name>
-		<value>	0.0.0.0:NODEMANAGER_LOCALIZER_ADDRESS</value>
+		<value>0.0.0.0:NODEMANAGER_LOCALIZER_ADDRESS</value>
 		<description>Address where the localizer IPC is.</description>
 	</property>
 
