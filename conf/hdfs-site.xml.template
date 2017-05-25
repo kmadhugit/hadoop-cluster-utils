@@ -32,7 +32,7 @@
 	
 	<property>
 		<name>dfs.namenode.http-address</name>
-		<value>	0.0.0.0:NAMENODE_HTTP_ADDRESS</value>
+		<value>0.0.0.0:NAMENODE_HTTP_ADDRESS</value>
 		<description>The address and the base port where the dfs namenode web ui will listen on.</description>
 	</property>
 	
